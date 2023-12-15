@@ -1,6 +1,7 @@
 package com.c4cometrue.mystorage.service;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -32,7 +33,6 @@ public class FileDataService {
         LocalDateTime dateTime = LocalDateTime.now();
         String formattedDateTime = dateTime.format(formatter);
         Path path = Paths.get(UPLOADED_FOLDER + formattedDateTime + "_" + file.getOriginalFilename());
-        log.info("path: " + path);
         file.transferTo(path);
 
         saveFileData(formattedDateTime + "_" + file.getOriginalFilename(), file.getContentType(), file.getSize(), UPLOADED_FOLDER, userEmail);
@@ -44,6 +44,22 @@ public class FileDataService {
         FileData fileData = dtoToEntity(fileName, fileType, fileSize, filePath, userEmail);
         fileData.setStatus(Status.ACTIVE);
         fileDataRepository.save(fileData);
+    }
+
+    public void deleteFileData(String fileName, String userEmail) throws IOException {
+
+        log.info("fileName: " + fileName);
+        FileData fileData = fileDataRepository.findByFileNameAndUserEmail(fileName, userEmail);
+
+        if (fileData != null){
+            fileData.setStatus(Status.DELETED);
+            fileDataRepository.save(fileData);
+
+            Path path = Paths.get(UPLOADED_FOLDER + fileName);
+            Files.delete(path);
+        }else{
+            throw new RuntimeException("파일 없음");
+        }
     }
 
     private FileData dtoToEntity(String fileName, String fileType, Long fileSize, String filePath, String userEmail){
