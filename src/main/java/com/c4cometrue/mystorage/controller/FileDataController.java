@@ -4,8 +4,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,6 +55,31 @@ public class FileDataController {
         }catch (Exception e) {
 
             log.error("파일 삭제 실패: " + e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> downloadFile(@RequestParam("fileName") String fileName, @RequestParam("userEmail") String userEmail){
+
+        try {
+
+            Resource resource = fileDataService.downloadFile(fileName, userEmail);
+            log.info(resource.toString());
+            if (resource.exists()){
+
+                return ResponseEntity.ok().header(
+                        HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+            }else{
+
+                log.error("파일 다운로드 실패: 데이터가 없습니다.");
+                return ResponseEntity.badRequest().build();
+            }
+
+        }catch (Exception e) {
+
+            log.error("파일 다운로드 실패: " + e.getMessage(), e);
             return ResponseEntity.badRequest().build();
         }
     }

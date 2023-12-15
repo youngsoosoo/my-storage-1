@@ -1,12 +1,17 @@
 package com.c4cometrue.mystorage.service;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,6 +64,20 @@ public class FileDataService {
             Files.delete(path);
         }else{
             throw new RuntimeException("파일 없음");
+        }
+    }
+
+    public Resource downloadFile(String fileName, String userEmail) throws MalformedURLException {
+
+        FileData fileData = fileDataRepository.findByFileNameAndUserEmail(fileName, userEmail);
+
+        if (fileData != null && Objects.equals(fileData.getUserEmail(), userEmail)){
+
+            Path filePath = Paths.get(UPLOADED_FOLDER).resolve(fileName).normalize();
+            log.info(filePath);
+            return new UrlResource(filePath.toUri());
+        }else{
+            throw new RuntimeException("사용자가 다릅니다.");
         }
     }
 
